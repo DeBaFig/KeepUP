@@ -1,0 +1,8 @@
+ipdb
+black
+isort
+pylint
+pytest_asyncio
+httpx
+pytest-cov
+flake8
