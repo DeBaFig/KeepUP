@@ -1,5 +1,7 @@
-from baloon import Balao, LARGURA, ALTURA
+import sys
 import pygame
+
+from baloon import ALTURA, LARGURA, Balao
 
 BRANCO = (255, 255, 255)
 AZUL_CLARO = (173, 216, 230)
@@ -8,14 +10,15 @@ VERMELHO = (255, 0, 0)
 VERDE_ESCURO = (0, 150, 0)
 VERDE_CLARO = (0, 200, 0)
 CINZA = (150, 150, 150)
-AMARELO_OURO = (255, 215, 0)
 
 MENU = 0
 JOGANDO = 1
 GAME_OVER = 2
 
+
 class Button:
-    def __init__(self, x, y, width, height, text, color, hover_color, action=None, disabled=False):
+    def __init__(self, x, y, width, height, text, color, hover_color,
+                 action=None, disabled=False):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.color = color
@@ -29,14 +32,15 @@ class Button:
         if self.disabled:
             cor_atual = CINZA
         else:
-            cor_atual = self.hover_color if self.rect.collidepoint(mouse_pos) else self.color
+            cor_atual = (self.hover_color
+                         if self.rect.collidepoint(mouse_pos) else self.color)
         pygame.draw.rect(surface, cor_atual, self.rect)
         text_surf = self.font.render(self.text, True, BRANCO)
         text_rect = text_surf.get_rect(center=self.rect.center)
         surface.blit(text_surf, text_rect)
 
     def is_clicked(self, pos):
-        return not self.disabled and self.rect.collidepoint(pos)
+        return (not self.disabled) and self.rect.collidepoint(pos)
 
 
 def main():
@@ -46,17 +50,18 @@ def main():
 
     fundo_img = None
     try:
-        fundo_img_original = pygame.image.load("background.jpeg").convert()
-        fundo_img = pygame.transform.scale(fundo_img_original, (LARGURA, ALTURA))
-    except pygame.error as e:
-        print(f"Erro ao carregar o fundo 'background.jpeg': {e}. Usando cor sólida.")
+        fundo_original = pygame.image.load("background.jpeg").convert()
+        fundo_img = pygame.transform.scale(fundo_original, (LARGURA, ALTURA))
+    except pygame.error as exc:
+        print("Erro ao carregar o fundo 'background.jpeg':" +
+              " %s. Usando cor sólida." % exc)
 
-    # carregar imagem do título para a tela inicial (coloque 'title.png' na pasta do projeto)
+    title_img = None
     try:
-        title_img_original = pygame.image.load("title.png").convert_alpha()
+        title_original = pygame.image.load("title.png").convert_alpha()
         max_width = int(LARGURA * 0.8)
-        scale = max_width / title_img_original.get_width()
-        title_img = pygame.transform.rotozoom(title_img_original, 0, scale)
+        scale = max_width / title_original.get_width()
+        title_img = pygame.transform.rotozoom(title_original, 0, scale)
     except pygame.error:
         title_img = None
 
@@ -69,7 +74,6 @@ def main():
 
     fonte_titulo = pygame.font.Font(None, 84)
     fonte_pontuacao = pygame.font.Font(None, 74)
-    fonte_mensagem = pygame.font.Font(None, 36)
 
     def go_to_menu():
         nonlocal estado_jogo
@@ -91,7 +95,8 @@ def main():
         superficie.blit(texto_surface, texto_rect)
 
     def desenhar_pontuacao():
-        desenhar_texto(tela, str(pontuacao), fonte_pontuacao, PRETO, LARGURA // 2, 40)
+        desenhar_texto(tela, str(pontuacao), fonte_pontuacao, PRETO,
+                       LARGURA // 2, 40)
 
     def desenhar_fundo():
         if fundo_img:
@@ -99,26 +104,49 @@ def main():
         else:
             tela.fill(AZUL_CLARO)
 
-    quit_button = Button(LARGURA - 150, 10, 140, 50, "SAIR", VERMELHO, (200, 0, 0), action=go_to_menu)
-    start_button = Button(LARGURA // 2 - 100, ALTURA // 2, 200, 70, "START", VERDE_ESCURO, VERDE_CLARO, action=start_game)
+    def quit_game():
+        pygame.quit()
+        sys.exit()
+
+    quit_button = Button(
+        LARGURA - 150, 10, 140, 50, "SAIR", VERMELHO, (200, 0, 0),
+        action=quit_game
+    )
+    back_button = Button(
+        LARGURA - 150, 10, 140, 50, "VOLTAR", CINZA, (180, 180, 180),
+        action=go_to_menu
+    )
+    start_button = Button(
+        LARGURA // 2 - 100, ALTURA // 2, 200, 70, "START", VERDE_ESCURO,
+        VERDE_CLARO, action=start_game
+    )
+    restart_button_go = Button(
+        LARGURA // 2 - 120, ALTURA * 3 // 4 - 50, 240, 60, "JOGAR NOVAMENTE",
+        VERDE_ESCURO, VERDE_CLARO, action=restart_game
+    )
 
     def desenhar_menu():
         desenhar_fundo()
         if title_img:
-            title_rect = title_img.get_rect(center=(LARGURA // 2, ALTURA // 4))
+            title_rect = title_img.get_rect(
+                center=(LARGURA // 2, ALTURA // 4)
+            )
             tela.blit(title_img, title_rect)
+        else:
+            desenhar_texto(
+                tela, "Keep Up: O Balão Diagonal", fonte_titulo, PRETO,
+                LARGURA // 2, ALTURA // 4
+            )
         start_button.draw(tela)
         quit_button.draw(tela)
         pygame.display.flip()
 
     def desenhar_game_over(pontos):
         tela.fill(PRETO)
-        desenhar_texto(tela, "GAME OVER", fonte_titulo, (255, 0, 0), LARGURA // 2, ALTURA // 4)
-        desenhar_texto(tela, f"Pontuação da Rodada: {pontos}", fonte_pontuacao, BRANCO, LARGURA // 2, ALTURA // 2 - 40)
-        restart_button_go = Button(
-            LARGURA // 2 - 120, ALTURA * 3 // 4 - 50, 240, 60,
-            "JOGAR NOVAMENTE", VERDE_ESCURO, VERDE_CLARO, action=restart_game
-        )
+        desenhar_texto(tela, "GAME OVER", fonte_titulo, (255, 0, 0),
+                       LARGURA // 2, ALTURA // 4)
+        desenhar_texto(tela, f"Pontuação da Rodada: {pontos}",
+                       fonte_pontuacao, BRANCO, LARGURA // 2, ALTURA // 2 - 40)
         restart_button_go.draw(tela)
         quit_button.draw(tela)
         pygame.display.flip()
@@ -131,41 +159,44 @@ def main():
                 jogo_rodando = False
 
             if evento.type == pygame.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()
-
-                if quit_button.is_clicked(pos):
-                    quit_button.action()
-                    continue
+                pos = evento.pos
 
                 if estado_jogo == JOGANDO:
+                    if back_button.is_clicked(pos):
+                        back_button.action()
+                        continue
+
                     if balao_unico.foi_clicado(pos):
                         balao_unico.rebater()
                         pontuacao += pontos_por_clique
+                        continue
 
-                elif estado_jogo == MENU:
-                    if start_button.is_clicked(pos):
-                        start_button.action()
+                else:
+                    if quit_button.is_clicked(pos):
+                        quit_button.action()
+                        continue
 
-                elif estado_jogo == GAME_OVER:
-                    restart_button_go = Button(LARGURA // 2 - 120, ALTURA * 3 // 4 - 50, 240, 60, "JOGAR NOVAMENTE", VERDE_ESCURO, VERDE_CLARO, action=restart_game)
-                    if restart_button_go.is_clicked(pos):
-                        restart_button_go.action()
+                    if estado_jogo == MENU:
+                        if start_button.is_clicked(pos):
+                            start_button.action()
+
+                    elif estado_jogo == GAME_OVER:
+                        if restart_button_go.is_clicked(pos):
+                            restart_button_go.action()
 
         if estado_jogo == JOGANDO:
             todos_sprites.update()
             if balao_unico.rect.top > ALTURA:
-                print(f"Game Over! Sua pontuação final é: {pontuacao}")
                 estado_jogo = GAME_OVER
 
             desenhar_fundo()
             todos_sprites.draw(tela)
             desenhar_pontuacao()
-            quit_button.draw(tela)
+            back_button.draw(tela)
             pygame.display.flip()
 
         elif estado_jogo == MENU:
-            # não atualizar o balão no menu; apenas desenhar estático até START ser pressionado
-             desenhar_menu()
+            desenhar_menu()
 
         elif estado_jogo == GAME_OVER:
             desenhar_game_over(pontuacao)
