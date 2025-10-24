@@ -10,15 +10,20 @@ VERMELHO = (255, 0, 0)
 VERDE_ESCURO = (0, 150, 0)
 VERDE_CLARO = (0, 200, 0)
 CINZA = (150, 150, 150)
+AZUL_CEU = (138, 199, 254)
+AZUL_CEU_ESCURO = (99, 157, 254)
 
 MENU = 0
 JOGANDO = 1
 GAME_OVER = 2
+APENAS_FUNDO = 3
 
 
 class Button:
+    """Classe que representa um botão na interface do jogo."""
+
     def __init__(self, x, y, width, height, text, color, hover_color,
-                 action=None, disabled=False):
+                 action=None, disabled=False, image=None):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
         self.color = color
@@ -26,6 +31,7 @@ class Button:
         self.action = action
         self.font = pygame.font.Font(None, 40)
         self.disabled = disabled
+        self.image = image
 
     def draw(self, surface):
         mouse_pos = pygame.mouse.get_pos()
@@ -34,10 +40,18 @@ class Button:
         else:
             cor_atual = (self.hover_color
                          if self.rect.collidepoint(mouse_pos) else self.color)
-        pygame.draw.rect(surface, cor_atual, self.rect)
-        text_surf = self.font.render(self.text, True, BRANCO)
-        text_rect = text_surf.get_rect(center=self.rect.center)
-        surface.blit(text_surf, text_rect)
+
+        # ALTERADO: Desenha o retângulo de fundo SOMENTE se não houver imagem.
+        if not self.image:
+            pygame.draw.rect(surface, cor_atual, self.rect)
+
+        if self.image:
+            image_rect = self.image.get_rect(center=self.rect.center)
+            surface.blit(self.image, image_rect)
+        else:
+            text_surf = self.font.render(self.text, True, BRANCO)
+            text_rect = text_surf.get_rect(center=self.rect.center)
+            surface.blit(text_surf, text_rect)
 
     def is_clicked(self, pos):
         return (not self.disabled) and self.rect.collidepoint(pos)
@@ -51,6 +65,8 @@ def main():
     fundo_img = None
     try:
         fundo_original = pygame.image.load("background.jpeg").convert()
+        game_over = pygame.image.load("game_over.png").convert()
+        game_over = pygame.image.load("game_over.png").convert()
         fundo_img = pygame.transform.scale(fundo_original, (LARGURA, ALTURA))
     except pygame.error as exc:
         print("Erro ao carregar o fundo 'background.jpeg':" +
@@ -65,6 +81,14 @@ def main():
     except pygame.error:
         title_img = None
 
+    start_img = None
+    try:
+        start_original = pygame.image.load("btn_start.png").convert_alpha()
+        start_img = pygame.transform.scale(start_original, (200, 70))
+    except pygame.error as exc:
+        print("Erro ao carregar a imagem do botão 'btn_start.png': %s" % exc)
+        start_img = None
+        
     balao_unico = Balao()
     todos_sprites = pygame.sprite.Group(balao_unico)
 
@@ -87,6 +111,10 @@ def main():
 
     def restart_game():
         start_game()
+
+    def mostrar_fundo():  # <-- NOVA FUNÇÃO AQUI
+        nonlocal estado_jogo
+        estado_jogo = APENAS_FUNDO
 
     def desenhar_texto(superficie, texto, fonte, cor, x, y):
         texto_surface = fonte.render(texto, True, cor)
@@ -117,32 +145,30 @@ def main():
         action=go_to_menu
     )
     start_button = Button(
-        LARGURA // 2 - 100, ALTURA // 2, 200, 70, "START", VERDE_ESCURO,
-        VERDE_CLARO, action=start_game
+        LARGURA // 2 - 60, ALTURA * 3 // 4 - 50, 120, 50, "", AZUL_CEU,
+        AZUL_CEU_ESCURO, action=start_game, image=start_img
     )
+    # ALTERADO: Ajuste na coordenada Y para alinhar com o "Re-Fill"
     restart_button_go = Button(
-        LARGURA // 2 - 120, ALTURA * 3 // 4 - 50, 240, 60, "JOGAR NOVAMENTE",
+        LARGURA // 2 - 200, ALTURA // 2, 400, 200, "",
         VERDE_ESCURO, VERDE_CLARO, action=restart_game
+
     )
 
     def desenhar_menu():
         desenhar_fundo()
         if title_img:
             title_rect = title_img.get_rect(
-                center=(LARGURA // 2, ALTURA // 4)
-            )
+                center=(LARGURA // 2, ALTURA // 4))
             tela.blit(title_img, title_rect)
-        else:
-            desenhar_texto(
-                tela, "Keep Up: O Balão Diagonal", fonte_titulo, PRETO,
-                LARGURA // 2, ALTURA // 4
-            )
+
         start_button.draw(tela)
         quit_button.draw(tela)
         pygame.display.flip()
 
     def desenhar_game_over(pontos):
-        tela.fill(PRETO)
+        tela.blit(game_over, (0, 0))
+
         desenhar_texto(tela, "GAME OVER", fonte_titulo, (255, 0, 0),
                        LARGURA // 2, ALTURA // 4)
         desenhar_texto(tela, f"Pontuação da Rodada: {pontos}",
