@@ -14,7 +14,7 @@ ESTADO_CLICADO = 1
 ESTADO_INTERMEDIARIO = 2
 ESTADO_FECHADOS = 3
 
-DURACAO_ABERTOS = 3.0
+DURACAO_ABERTOS = 2.0
 DURACAO_INTERMEDIARIO = 0.1
 DURACAO_FECHADOS = 0.1
 DURACAO_CLICADO = 1.0
@@ -38,13 +38,13 @@ class Balao(pygame.sprite.Sprite):
 
         try:
             self.sprites[ESTADO_ABERTOS] = pygame.image.load(
-                "movimento_olhos_abertos.png").convert_alpha()
+                "assets/movimento_olhos_abertos.png").convert_alpha()
             self.sprites[ESTADO_CLICADO] = pygame.image.load(
-                "movimento_ao_clicar.png").convert_alpha()
+                "assets/movimento_ao_clicar.png").convert_alpha()
             self.sprites[ESTADO_INTERMEDIARIO] = pygame.image.load(
-                "movimento_olhos_intermediario.png").convert_alpha()
+                "assets/movimento_olhos_intermediario.png").convert_alpha()
             self.sprites[ESTADO_FECHADOS] = pygame.image.load(
-                "movimento_olhos_fechados.png").convert_alpha()
+                "assets/movimento_olhos_fechados.png").convert_alpha()
 
         except pygame.error as e:
             print(f"Erro ao carregar sprites: {e}. Usando imagens" +
